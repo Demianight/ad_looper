@@ -1,6 +1,7 @@
 from typing import Sequence
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from apps.auth.dependencies import get_request_user
 from apps.users import schemas
 from . import crud
 from apps.dependencies import get_db
@@ -10,9 +11,20 @@ router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.get("")
 def get_users(
-    db: Session = Depends(get_db),
+    username: str | None = None, db: Session = Depends(get_db)
 ) -> Sequence[schemas.UserResponse]:
-    return crud.get_all_users(db)
+    if username:
+        users = crud.get_users(db, username=username)
+    else:
+        users = crud.get_users(db)
+    return users.all()
+
+
+@router.get("/me")
+def get_current_user(
+    current_user: schemas.UserResponse = Depends(get_request_user),
+) -> schemas.UserResponse:
+    return current_user
 
 
 @router.post("", status_code=201)
@@ -26,7 +38,7 @@ def create_user(
 def read_user(
     user_id: int, db: Session = Depends(get_db)
 ) -> schemas.UserResponse:
-    return crud.get_user(db, user_id)
+    return crud.get_user(db, id=user_id)
 
 
 @router.put("/{user_id}", status_code=200)

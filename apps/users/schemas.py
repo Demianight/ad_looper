@@ -1,14 +1,16 @@
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, SecretStr
 
 
 class UserCreate(BaseModel):
     username: str
     email: EmailStr
+    password: SecretStr
 
 
 class UserUpdate(BaseModel):
     username: str | None = None
     email: EmailStr | None = None
+    password: SecretStr | None = None
 
 
 class UserResponse(BaseModel):

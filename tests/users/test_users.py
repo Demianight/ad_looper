@@ -8,7 +8,11 @@ def test_get_users(client: TestClient, setup_database):
 
 
 def test_create_user(client: TestClient, setup_database):
-    user_data = {"username": "testuser", "email": "testuser@example.com"}
+    user_data = {
+        "username": "testuser",
+        "email": "testuser@example.com",
+        "password": "password",
+    }
     response = client.post("/users", json=user_data)
     assert response.status_code == 201
     response_data = response.json()
@@ -18,7 +22,11 @@ def test_create_user(client: TestClient, setup_database):
 
 def test_read_user(client: TestClient, setup_database):
     # First, create a user to test reading
-    user_data = {"username": "testuser", "email": "testuser@example.com"}
+    user_data = {
+        "username": "testuser",
+        "email": "testuser@example.com",
+        "password": "password",
+    }
     create_response = client.post("/users", json=user_data)
     created_user_id = create_response.json()["id"]
 
@@ -33,7 +41,11 @@ def test_read_user(client: TestClient, setup_database):
 
 def test_update_user(client: TestClient, setup_database):
     # First, create a user to test updating
-    user_data = {"username": "testuser", "email": "testuser@example.com"}
+    user_data = {
+        "username": "testuser",
+        "email": "testuser@example.com",
+        "password": "password",
+    }
     create_response = client.post("/users", json=user_data)
     user_id = create_response.json()["id"]
 
@@ -52,7 +64,11 @@ def test_update_user(client: TestClient, setup_database):
 
 def test_delete_user(client: TestClient, setup_database):
     # First, create a user to test deletion
-    user_data = {"username": "testuser", "email": "testuser@example.com"}
+    user_data = {
+        "username": "testuser",
+        "email": "testuser@example.com",
+        "password": "password",
+    }
     create_response = client.post("/users", json=user_data)
     user_id = create_response.json()["id"]
 

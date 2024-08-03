@@ -8,6 +8,12 @@ class DBSettings(BaseModel):
     url: str
 
 
+class TokenSettings(BaseModel):
+    secret_key: str
+    algorithm: str
+    access_token_expire_minutes: int
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -17,6 +23,7 @@ class Settings(BaseSettings):
     )
 
     db: DBSettings
+    token: TokenSettings
 
     debug: bool
     base_dir: Path = Path(__file__).resolve().parent.parent
