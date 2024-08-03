@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "ad-looper"
+version = "0.1.0"
+description = ""
+authors = ["Demianight <komarovdemian@yandex.ru>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = {extras = ["all"], version = "^0.112.0"}
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.2"
+isort = "^5.13.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
