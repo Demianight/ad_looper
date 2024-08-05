@@ -27,6 +27,7 @@ class Settings(BaseSettings):
 
     debug: bool
     base_dir: Path = Path(__file__).resolve().parent.parent
+    media_folder: Path = base_dir / "uploaded_media"
 
 
 settings = Settings()
