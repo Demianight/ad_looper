@@ -1,5 +1,8 @@
-import jwt
 from datetime import datetime, timedelta
+
+import jwt
+from passlib.context import CryptContext
+
 from ad_looper.config import settings
 
 
@@ -35,3 +38,14 @@ def decode_access_token(token: str) -> dict:
         raise Exception("Token has expired")
     except jwt.InvalidTokenError:
         raise Exception("Decoded invalid token")
+
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)

@@ -1,39 +1,42 @@
+from httpx import AsyncClient
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from database.models import Base
+import pytest_asyncio
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from ad_looper.main import app
 from apps.dependencies import get_db
+from database.models import Base
 
-# Create an in-memory SQLite database for testing
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SQLALCHEMY_DATABASE_URL = (
+    "postgresql+asyncpg://demian:test@localhost:5432/ad_looper_test"
+)
 
-print("Im alive")
+# Create an async engine and sessionmaker for test database
+engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=True)
+TestingSessionLocal = async_sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine,
+)
 
 
-def override_get_db():
-    db = SessionLocal()
+async def db_override():
+    # Create all tables in the test database
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    db = TestingSessionLocal()
     try:
         yield db
     finally:
-        db.close()
-
-
-app.dependency_overrides[get_db] = override_get_db
+        await db.close()
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
 
 
 @pytest.fixture(scope="function")
-def setup_database():
-    # Create tables
-    Base.metadata.create_all(bind=engine)
-    yield
-    # Drop tables
-    Base.metadata.drop_all(bind=engine)
-
-
-@pytest.fixture(scope="session")
 def client():
-    return TestClient(app)
+    app.dependency_overrides[get_db] = db_override
+
+    yield TestClient(app)
+
+    app.dependency_overrides.clear()
