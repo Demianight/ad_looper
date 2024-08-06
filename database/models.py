@@ -1,97 +1,142 @@
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Time, func
-from sqlalchemy.ext.asyncio import (AsyncAttrs, async_sessionmaker,
-                                    create_async_engine)
-from sqlalchemy.orm import (DeclarativeBase, Mapped, declared_attr,
-                            mapped_column, relationship)
+from datetime import time
+
+from sqlalchemy import ForeignKey, Integer, Time
+from sqlalchemy.ext.asyncio import (
+    AsyncAttrs,
+    async_sessionmaker,
+    create_async_engine,
+)
+from sqlalchemy.orm import (
+    DeclarativeBase,
+    Mapped,
+    declared_attr,
+    mapped_column,
+    relationship,
+)
 
 from ad_looper.config import settings
+from database.mixins import Owned, TimestampMixin, TokenBase
 
 
 class Base(AsyncAttrs, DeclarativeBase):
     pass
 
 
-class TimestampMixin:
-    @declared_attr
-    def created_at(cls) -> Mapped[DateTime]:
-        return mapped_column(DateTime, default=func.now(), nullable=False)
+class Model(Base):
+    __abstract__ = True
 
     @declared_attr
-    def updated_at(cls) -> Mapped[DateTime]:
-        return mapped_column(
-            DateTime, default=func.now(), onupdate=func.now(), nullable=False
-        )
+    def id(cls) -> Mapped[int]:
+        return mapped_column(Integer, primary_key=True, index=True)
 
 
-class Owned:
-    @declared_attr
-    def owner_id(cls) -> Mapped[int]:
-        return mapped_column(Integer, ForeignKey("users.id"))
+class Token(Model, TokenBase, Owned):
+    __tablename__ = "tokens"
+
+    owner: Mapped["User"] = relationship("User", back_populates="tokens")
 
 
-class User(Base):
+class DeviceToken(Model, TokenBase, TimestampMixin):
+    __tablename__ = "display_device_tokens"
+
+    display_device_id: Mapped[int] = mapped_column(
+        ForeignKey("display_devices.id")
+    )
+
+    display_device: Mapped["DisplayDevice"] = relationship(
+        "DisplayDevice", back_populates="tokens"
+    )
+
+
+class User(Model):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    username: Mapped[str] = mapped_column(String, unique=True, index=True)
-    email: Mapped[str] = mapped_column(String, unique=True, index=True)
-    password: Mapped[str] = mapped_column(String)
+    username: Mapped[str] = mapped_column(unique=True, index=True)
+    email: Mapped[str] = mapped_column(unique=True, index=True)
+    password: Mapped[str]
 
     media: Mapped[list["Media"]] = relationship(
-        "Media", back_populates="owner"
+        "Media",
+        back_populates="owner",
     )
     media_groups: Mapped[list["MediaGroup"]] = relationship(
-        "MediaGroup", back_populates="owner"
+        "MediaGroup",
+        back_populates="owner",
     )
     display_devices: Mapped[list["DisplayDevice"]] = relationship(
-        "DisplayDevice", back_populates="owner"
+        "DisplayDevice",
+        back_populates="owner",
+    )
+
+    schedules: Mapped[list["Schedule"]] = relationship(
+        "Schedule",
+        back_populates="owner",
+    )
+    tokens: Mapped[list["Token"]] = relationship(
+        "Token",
+        back_populates="owner",
     )
 
 
-class DisplayDevice(Base, Owned, TimestampMixin):
+class DisplayDevice(Model, Owned, TimestampMixin):
     __tablename__ = "display_devices"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    name: Mapped[str] = mapped_column(String, index=True)
-    description: Mapped[str] = mapped_column(String)
+    name: Mapped[str] = mapped_column(index=True)
+    description: Mapped[str] = mapped_column(nullable=True)
+    is_active: Mapped[bool] = mapped_column(default=True)
+
+    media_group_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("media_groups.id"), nullable=True
+    )
 
     owner: Mapped["User"] = relationship(
         "User", back_populates="display_devices"
     )
+    media_group: Mapped["MediaGroup"] = relationship(
+        "MediaGroup", back_populates="display_devices"
+    )
+    tokens: Mapped[list["DeviceToken"]] = relationship(
+        "DeviceToken", back_populates="display_device"
+    )
 
 
-class Media(Base, Owned, TimestampMixin):
+class Media(Model, Owned, TimestampMixin):
     __tablename__ = "media"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    name: Mapped[str] = mapped_column(String)
-    filename: Mapped[str] = mapped_column(String, nullable=True)
+    name: Mapped[str]
+    filename: Mapped[str] = mapped_column(nullable=True)
 
     owner: Mapped["User"] = relationship("User", back_populates="media")
     media_groups: Mapped[list["MediaGroup"]] = relationship(
         "MediaGroup",
         secondary="media_group_media",
         back_populates="media_items",
+        lazy="selectin",
     )
     schedules: Mapped[list["Schedule"]] = relationship(
-        "Schedule", back_populates="media"
+        "Schedule",
+        back_populates="media",
+        lazy="selectin",
     )
 
 
-class MediaGroup(Base, Owned, TimestampMixin):
+class MediaGroup(Model, Owned, TimestampMixin):
     __tablename__ = "media_groups"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    name: Mapped[str] = mapped_column(String)
+    name: Mapped[str]
 
     owner: Mapped["User"] = relationship("User", back_populates="media_groups")
     media_items: Mapped[list["Media"]] = relationship(
         "Media",
         secondary="media_group_media",
         back_populates="media_groups",
+        lazy="selectin",
     )
     schedules: Mapped[list["Schedule"]] = relationship(
         "Schedule", back_populates="media_group"
+    )
+    display_devices: Mapped[list["DisplayDevice"]] = relationship(
+        "DisplayDevice", back_populates="media_group", lazy="selectin"
     )
 
 
@@ -99,36 +144,38 @@ class MediaGroupMedia(Base):
     __tablename__ = "media_group_media"
 
     media_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("media.id"), primary_key=True
+        ForeignKey("media.id"), primary_key=True
     )
     media_group_id: Mapped[int] = mapped_column(
-        Integer,
         ForeignKey("media_groups.id"),
         primary_key=True,
     )
 
 
-class Schedule(Base, TimestampMixin):
+class Schedule(Model, TimestampMixin, Owned):
     __tablename__ = "schedules"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    trigger_time: Mapped[Time] = mapped_column(Time)
+    trigger_time: Mapped[time] = mapped_column(Time)
 
-    media_id: Mapped[int] = mapped_column(Integer, ForeignKey("media.id"))
-    media_group_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("media_groups.id")
-    )
+    media_id: Mapped[int] = mapped_column(ForeignKey("media.id"))
+    media_group_id: Mapped[int] = mapped_column(ForeignKey("media_groups.id"))
 
+    owner: Mapped["User"] = relationship("User", back_populates="schedules")
     media: Mapped["Media"] = relationship("Media", back_populates="schedules")
     media_group: Mapped["MediaGroup"] = relationship(
         "MediaGroup", back_populates="schedules"
     )
 
 
-# Configure your database URL here
-DATABASE_URL = settings.db.url
+class Log(Model, TimestampMixin):
+    __tablename__ = "logs"
 
-async_engine = create_async_engine(DATABASE_URL)
+    url: Mapped[str]
+    method: Mapped[str]
+    status_code: Mapped[int]
+
+
+async_engine = create_async_engine(settings.db.url)
 AsyncSessionLocal = async_sessionmaker(
     bind=async_engine,
     expire_on_commit=False,

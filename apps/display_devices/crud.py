@@ -45,7 +45,7 @@ async def get_display_device(db: AsyncSession, **kwargs) -> DisplayDevice:
     result = await db.execute(query)
     db_display_device = result.scalars().first()
     if db_display_device is None:
-        raise HTTPException(status_code=404, detail="DisplayDevice not found")
+        raise HTTPException(status_code=404, detail="Display device not found")
     return db_display_device
 
 

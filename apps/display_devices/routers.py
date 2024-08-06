@@ -3,12 +3,15 @@ from typing import Sequence
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from apps.dependencies import get_db, get_request_user
+from apps.common.dependencies import get_db, get_request_user
 from database.models import User
 
 from . import crud
-from .schemas import (DisplayDeviceCreate, DisplayDeviceResponse,
-                      DisplayDeviceUpdate)
+from .schemas import (
+    DisplayDeviceCreate,
+    DisplayDeviceResponse,
+    DisplayDeviceUpdate,
+)
 
 router = APIRouter(prefix="/display_devices", tags=["DisplayDevices"])
 

@@ -1,4 +1,10 @@
-from pydantic import BaseModel, ConfigDict
+from typing import Sequence
+
+from pydantic import BaseModel
+
+from apps.common.schemas import MediaGroupSimpleResponse, MediaSimpleResponse
+from apps.media_groups.schemas import MediaGroupResponse
+from apps.schedules.schemas import ScheduleResponse
 
 
 class MediaCreate(BaseModel):
@@ -9,10 +15,6 @@ class MediaUpdate(BaseModel):
     name: str | None = None
 
 
-class MediaResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    name: str
-    filename: str | None
-    owner_id: int
+class MediaResponse(MediaSimpleResponse):
+    media_groups: Sequence[MediaGroupSimpleResponse]
+    schedules: Sequence[ScheduleResponse]

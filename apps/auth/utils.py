@@ -6,7 +6,7 @@ from passlib.context import CryptContext
 from ad_looper.config import settings
 
 
-def create_access_token(
+def create_jwt_token(
     data: dict,
     expires_delta: timedelta | None = None,
 ) -> str:

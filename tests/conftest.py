@@ -1,10 +1,11 @@
-from httpx import AsyncClient
 import pytest
-from fastapi.testclient import TestClient
 import pytest_asyncio
+from fastapi.testclient import TestClient
+from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
 from ad_looper.main import app
-from apps.dependencies import get_db
+from apps.common.dependencies import get_db
 from database.models import Base
 
 SQLALCHEMY_DATABASE_URL = (

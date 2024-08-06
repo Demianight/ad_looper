@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import FileResponse
 
-from apps.dependencies import get_db, get_request_user
+from apps.common.dependencies import get_db, get_request_user
 from apps.media.utils import write_file
 from database.models import User
 
