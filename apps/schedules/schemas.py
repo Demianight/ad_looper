@@ -1,6 +1,8 @@
 from datetime import time
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
+
+from apps.common.schemas import ScheduleSimpleResponse
 
 
 class ScheduleCreate(BaseModel):
@@ -15,10 +17,5 @@ class ScheduleUpdate(BaseModel):
     media_group_id: int | None = None
 
 
-class ScheduleResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    trigger_time: time
-    media_id: int
-    media_group_id: int
+class ScheduleResponse(ScheduleSimpleResponse):
+    pass

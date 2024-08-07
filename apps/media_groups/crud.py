@@ -85,3 +85,22 @@ async def add_media_to_media_group(
     await db.commit()
     await db.refresh(media_group_media_db)
     return media_group_media_db
+
+
+async def remove_media_from_media_group(
+    db: AsyncSession,
+    media_group_id: int,
+    media_id: int,
+) -> None:
+    query = select(MediaGroupMedia).filter(
+        MediaGroupMedia.media_group_id == media_group_id,
+        MediaGroupMedia.media_id == media_id,
+    )
+    result = await db.execute(query)
+    db_media_group_media = result.scalars().first()
+    if db_media_group_media is None:
+        raise HTTPException(status_code=404, detail="Media not found")
+    await db.delete(db_media_group_media)
+    await db.commit()
+
+    return db_media_group_media

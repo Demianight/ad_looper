@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
 
+from .middleware import LogRequestResponseMiddleware
 import apps
 
 
@@ -12,6 +13,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(LogRequestResponseMiddleware)
 
 app.include_router(apps.core_router)
 

@@ -25,7 +25,7 @@ class Owned:
         return mapped_column(Integer, ForeignKey("users.id"))
 
 
-class TokenBase(TimestampMixin):
+class TokenBase(TimestampMixin, Owned):
     @declared_attr
     def token(cls) -> Mapped[str]:
         return mapped_column(unique=True, nullable=False)

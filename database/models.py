@@ -30,19 +30,24 @@ class Model(Base):
         return mapped_column(Integer, primary_key=True, index=True)
 
 
-class Token(Model, TokenBase, Owned):
+class Token(Model, TokenBase):
     __tablename__ = "tokens"
 
     owner: Mapped["User"] = relationship("User", back_populates="tokens")
 
 
-class DeviceToken(Model, TokenBase, TimestampMixin):
+class DeviceToken(Model, TokenBase):
     __tablename__ = "display_device_tokens"
 
     display_device_id: Mapped[int] = mapped_column(
         ForeignKey("display_devices.id")
     )
 
+    owner: Mapped["User"] = relationship(
+        "User",
+        back_populates="display_device_tokens",
+        lazy="selectin",
+    )
     display_device: Mapped["DisplayDevice"] = relationship(
         "DisplayDevice", back_populates="tokens"
     )
@@ -58,23 +63,32 @@ class User(Model):
     media: Mapped[list["Media"]] = relationship(
         "Media",
         back_populates="owner",
+        cascade="all, delete-orphan",
     )
     media_groups: Mapped[list["MediaGroup"]] = relationship(
         "MediaGroup",
         back_populates="owner",
+        cascade="all, delete-orphan",
     )
     display_devices: Mapped[list["DisplayDevice"]] = relationship(
         "DisplayDevice",
         back_populates="owner",
+        cascade="all, delete-orphan",
     )
-
     schedules: Mapped[list["Schedule"]] = relationship(
         "Schedule",
         back_populates="owner",
+        cascade="all, delete-orphan",
     )
     tokens: Mapped[list["Token"]] = relationship(
         "Token",
         back_populates="owner",
+        cascade="all, delete-orphan",
+    )
+    display_device_tokens: Mapped[list["DeviceToken"]] = relationship(
+        "DeviceToken",
+        back_populates="owner",
+        cascade="all, delete-orphan",
     )
 
 
@@ -90,13 +104,23 @@ class DisplayDevice(Model, Owned, TimestampMixin):
     )
 
     owner: Mapped["User"] = relationship(
-        "User", back_populates="display_devices"
+        "User",
+        back_populates="display_devices",
+        lazy="selectin",
     )
     media_group: Mapped["MediaGroup"] = relationship(
-        "MediaGroup", back_populates="display_devices"
+        "MediaGroup",
+        back_populates="display_devices",
+        lazy="selectin",
     )
     tokens: Mapped[list["DeviceToken"]] = relationship(
-        "DeviceToken", back_populates="display_device"
+        "DeviceToken",
+        back_populates="display_device",
+    )
+    logs: Mapped[list["Log"]] = relationship(
+        "Log",
+        back_populates="device",
+        lazy="selectin",
     )
 
 
@@ -125,7 +149,11 @@ class MediaGroup(Model, Owned, TimestampMixin):
 
     name: Mapped[str]
 
-    owner: Mapped["User"] = relationship("User", back_populates="media_groups")
+    owner: Mapped["User"] = relationship(
+        "User",
+        back_populates="media_groups",
+        lazy="selectin",
+    )
     media_items: Mapped[list["Media"]] = relationship(
         "Media",
         secondary="media_group_media",
@@ -133,10 +161,14 @@ class MediaGroup(Model, Owned, TimestampMixin):
         lazy="selectin",
     )
     schedules: Mapped[list["Schedule"]] = relationship(
-        "Schedule", back_populates="media_group"
+        "Schedule",
+        back_populates="media_group",
+        lazy="selectin",
     )
     display_devices: Mapped[list["DisplayDevice"]] = relationship(
-        "DisplayDevice", back_populates="media_group", lazy="selectin"
+        "DisplayDevice",
+        back_populates="media_group",
+        lazy="selectin",
     )
 
 
@@ -173,6 +205,14 @@ class Log(Model, TimestampMixin):
     url: Mapped[str]
     method: Mapped[str]
     status_code: Mapped[int]
+
+    device_id: Mapped[int] = mapped_column(
+        ForeignKey("display_devices.id"), nullable=True
+    )
+
+    device: Mapped["DisplayDevice"] = relationship(
+        "DisplayDevice", back_populates="logs"
+    )
 
 
 async_engine = create_async_engine(settings.db.url)

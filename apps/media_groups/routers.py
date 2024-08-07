@@ -87,10 +87,27 @@ async def add_media_to_media_group(
     media_id: int,
     user: User = Depends(get_request_user),
     db: AsyncSession = Depends(get_db),
+) -> bool:
+    media_group = await crud.get_media_group(db, id=media_group_id)
+    if media_group is None:
+        raise HTTPException(status_code=404, detail="MediaGroup not found")
+    if user != media_group.owner:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    await crud.add_media_to_media_group(db, media_group_id, media_id)
+    return True
+
+
+@router.delete("{media_group_id}/remove/{media_id}", status_code=204)
+async def remove_media_from_media_group(
+    media_group_id: int,
+    media_id: int,
+    user: User = Depends(get_request_user),
+    db: AsyncSession = Depends(get_db),
 ):
     media_group = await crud.get_media_group(db, id=media_group_id)
     if media_group is None:
         raise HTTPException(status_code=404, detail="MediaGroup not found")
     if user != media_group.owner:
         raise HTTPException(status_code=403, detail="Forbidden")
-    return await crud.add_media_to_media_group(db, media_group_id, media_id)
+    await crud.remove_media_from_media_group(db, media_group_id, media_id)
+    return

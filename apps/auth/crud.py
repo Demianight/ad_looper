@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import DeviceToken, Token
@@ -80,17 +80,29 @@ async def create_device_token(
     expires_at: datetime,
     token_type: str,
     display_device_id: int,
+    owner_id: int,
 ) -> DeviceToken:
     db_device_token = DeviceToken(
         token=token,
         expires_at=expires_at,
         display_device_id=display_device_id,
         token_type=token_type,
+        owner_id=owner_id,
     )
     db.add(db_device_token)
     await db.commit()
     await db.refresh(db_device_token)
     return db_device_token
+
+
+async def device_token_exists(
+    async_session: AsyncSession, display_device_id: int
+) -> bool:
+    stmt = select(
+        exists().where(DeviceToken.display_device_id == display_device_id)
+    )
+    result = await async_session.execute(stmt)
+    return result.scalar()
 
 
 async def get_device_token(db: AsyncSession, **kwargs) -> DeviceToken:

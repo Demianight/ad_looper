@@ -5,6 +5,7 @@ from typing import Sequence
 from pydantic import BaseModel
 
 from apps.common.schemas import MediaGroupSimpleResponse, MediaSimpleResponse
+from apps.schedules.schemas import ScheduleResponse
 
 
 class MediaGroupCreate(BaseModel):
@@ -17,3 +18,4 @@ class MediaGroupUpdate(BaseModel):
 
 class MediaGroupResponse(MediaGroupSimpleResponse):
     media_items: Sequence[MediaSimpleResponse]
+    schedules: Sequence[ScheduleResponse]

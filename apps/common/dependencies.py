@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import Depends, HTTPException, Request
+from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -37,7 +37,7 @@ async def get_valid_token(
 
     if not token or not token.is_active:
         raise HTTPException(status_code=401, detail="Invalid or revoked token")
-    if token.token_type != "access":
+    if token.token_type not in ["access", "access_display_device"]:
         raise HTTPException(status_code=401, detail="Access token required")
     if token.expires_at < datetime.utcnow():
         raise HTTPException(status_code=401, detail="Token expired")

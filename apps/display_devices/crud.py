@@ -10,21 +10,11 @@ from .schemas import DisplayDeviceCreate, DisplayDeviceUpdate
 async def create_display_device(
     db: AsyncSession, display_device: DisplayDeviceCreate, owner_id: int
 ) -> DisplayDevice:
-    # Check if a device with the same name already exists
-    query = select(DisplayDevice).filter(
-        DisplayDevice.name == display_device.name
-    )
-    result = await db.execute(query)
-    if result.scalars().first():
-        raise HTTPException(
-            status_code=400,
-            detail="DisplayDevice with this name already exists.",
-        )
-
     db_display_device = DisplayDevice(
         name=display_device.name,
         description=display_device.description,
         owner_id=owner_id,
+        media_group_id=display_device.media_group_id,
     )
 
     # Add the new device and commit the transaction
@@ -79,6 +69,9 @@ async def update_display_device(
 
     if display_device_update.description is not None:
         db_display_device.description = display_device_update.description
+
+    if display_device_update.media_group_id is not None:
+        db_display_device.media_group_id = display_device_update.media_group_id
 
     db.add(db_display_device)
     await db.commit()

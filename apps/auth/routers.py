@@ -95,7 +95,7 @@ async def register_display_device(
     device = await display_device_crud.get_display_device(
         db, id=display_device_id
     )
-    if await crud.get_device_token(db, display_device_id=display_device_id):
+    if await crud.device_token_exists(db, display_device_id=display_device_id):
         raise HTTPException(
             status_code=409, detail="Device already registered"
         )
@@ -105,6 +105,7 @@ async def register_display_device(
         token_type="access_display_device",
         expires_at=datetime.utcnow() + timedelta(days=365),
         display_device_id=device.id,
+        owner_id=user.id,
     )
     return TokenResponse(token=token, token_type="access_device")
 

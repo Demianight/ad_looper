@@ -18,7 +18,8 @@ async def create_schedule(
         (
             await db.execute(
                 select(Schedule).where(
-                    Schedule.media_group_id != schedule.media_group_id
+                    Schedule.media_group_id != schedule.media_group_id,
+                    Schedule.media_id == schedule.media_id,
                 )
             )
         )
